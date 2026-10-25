@@ -29,6 +29,8 @@ class GradCAMResult:
     """Generated Grad-CAM overlay and its source heatmap."""
 
     output_path: Path
+    original_path: Path
+    heatmap_path: Path
     heatmap: np.ndarray
     target_class_index: int
     target_score: float
@@ -163,11 +165,18 @@ class GradCAM:
 
         destination = Path(output_path) if output_path is not None else self._new_output_path()
         destination.parent.mkdir(parents=True, exist_ok=True)
+        original_path = destination.with_name(f"{destination.stem}_original.png")
+        heatmap_path = destination.with_name(f"{destination.stem}_heatmap.png")
+        source.save(original_path, format="PNG")
+        if not cv2.imwrite(str(heatmap_path), cv2.cvtColor(heatmap_rgb, cv2.COLOR_RGB2BGR)):
+            raise OSError(f"Could not save Grad-CAM heatmap to {heatmap_path}")
         if not cv2.imwrite(str(destination), cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)):
             raise OSError(f"Could not save Grad-CAM overlay to {destination}")
 
         return GradCAMResult(
             output_path=destination,
+            original_path=original_path,
+            heatmap_path=heatmap_path,
             heatmap=cam,
             target_class_index=target_class_index,
             target_score=float(target_score.detach().cpu()),
@@ -175,7 +184,7 @@ class GradCAM:
 
     def _new_output_path(self) -> Path:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        return self.output_dir / f"gradcam_{timestamp}_{uuid4().hex[:8]}.jpg"
+        return self.output_dir / f"gradcam_{timestamp}_{uuid4().hex[:8]}_overlay.jpg"
 
     def close(self) -> None:
         """Remove the registered hook when this Grad-CAM object is no longer used."""

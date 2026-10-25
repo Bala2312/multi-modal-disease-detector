@@ -7,12 +7,15 @@ from PIL import Image
 import train_engine
 from train_engine import (
     BinaryImageDataset,
+    ISIC2019Dataset,
     _atomic_torch_save,
     binary_metrics,
     cap_binary_split,
+    group_bootstrap_confidence_intervals,
     inverse_frequency_class_weights,
     load_isic_binary_records,
     load_xray_binary_records,
+    make_folds,
     parse_args,
     select_binary_indices,
     select_binary_threshold,
@@ -101,6 +104,43 @@ def test_isic_binary_filter_requires_one_hot_mel_or_nv(tmp_path):
     assert records[0][2] == "shared-lesion" or any(record[2] == "shared-lesion" for record in records)
 
 
+def test_full_isic_includes_scc_and_uses_lesion_grouped_folds(tmp_path):
+    root = tmp_path / "isic_2019"
+    image_root = root / "images"
+    image_root.mkdir(parents=True)
+    source_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
+    rows, metadata = [], []
+    for class_name in source_columns[:-1]:
+        for group_index in range(4):
+            image_id = f"{class_name}_{group_index}"
+            _write_image(image_root / image_id, ".jpg")
+            labels = {name: 0 for name in source_columns}
+            labels[class_name] = 1
+            rows.append({"image": image_id, **labels})
+            metadata.append({"image": image_id, "lesion_id": f"lesion-{class_name}-{group_index}"})
+    # The source UNK column exists but contains no positive training examples.
+    image_id = "unlabeled"
+    _write_image(image_root / image_id, ".jpg")
+    rows.append({"image": image_id, **{name: 0 for name in source_columns}})
+    metadata.append({"image": image_id, "lesion_id": "unlabeled-lesion"})
+    with (root / "ISIC_2019_Training_GroundTruth.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["image", *source_columns])
+        writer.writeheader()
+        writer.writerows(rows)
+    with (root / "ISIC_2019_Training_Metadata.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["image", "lesion_id"])
+        writer.writeheader()
+        writer.writerows(metadata)
+
+    dataset = ISIC2019Dataset(root)
+    folds = make_folds(dataset, "skin", n_splits=2, seed=42)
+    assert train_engine.ISIC_LABELS == ("MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC", "SCC")
+    assert dataset.skipped_unmapped == 1
+    assert np.bincount(dataset.strata, minlength=len(train_engine.ISIC_LABELS)).tolist() == [4] * 8
+    for train_indices, val_indices in folds:
+        assert set(dataset.groups[train_indices]).isdisjoint(set(dataset.groups[val_indices]))
+
+
 def test_group_split_caps_are_disjoint_and_reproducible():
     records = []
     for label in (0, 1):
@@ -145,6 +185,9 @@ def test_binary_metrics_and_checkpoint_save(tmp_path):
         ("MEL", "NV"),
     )
     assert metrics["per_class"]["MEL"]["recall"] == 0.5
+    assert "average_precision_positive_class" in metrics
+    assert "matthews_correlation_coefficient" in metrics
+    assert "expected_calibration_error_10_bins" in metrics
     assert metrics["positive_class"] == "MEL"
     assert len(metrics["confusion_matrix"]) == 2
     assert inverse_frequency_class_weights([0] * 9 + [1], 2).tolist() == pytest.approx([10 / 18, 5.0])
@@ -161,6 +204,17 @@ def test_binary_metrics_and_checkpoint_save(tmp_path):
     assert threshold_metrics["decision_threshold"] == threshold
     assert threshold_metrics["sensitivity"] > 0
     assert "specificity" in threshold_metrics
+    intervals = group_bootstrap_confidence_intervals(
+        np.asarray([0, 0, 1, 1]),
+        np.asarray([[0.8, 0.2], [0.6, 0.4], [0.3, 0.7], [0.9, 0.1]]),
+        np.asarray(["g0", "g1", "g2", "g3"]),
+        ("No Finding", "Pneumonia"),
+        threshold,
+        repetitions=25,
+    )
+    assert intervals["group_count"] == 4
+    assert intervals["repetitions"] == 25
+    assert intervals["sensitivity"][0] <= intervals["sensitivity"][1]
 
     path = tmp_path / "checkpoint.pth"
     _atomic_torch_save({"task": "binary_classification", "value": torch.tensor([3])}, path)

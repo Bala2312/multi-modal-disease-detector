@@ -18,9 +18,10 @@ from typing import Callable
 import numpy as np
 import torch
 from PIL import Image
-from sklearn.metrics import (accuracy_score, classification_report, confusion_matrix,
-                             f1_score, precision_score, recall_score, roc_auc_score)
-from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold, train_test_split
+from sklearn.metrics import (accuracy_score, average_precision_score, balanced_accuracy_score,
+                             classification_report, confusion_matrix, f1_score,
+                             matthews_corrcoef, precision_score, recall_score, roc_auc_score)
+from sklearn.model_selection import StratifiedGroupKFold, train_test_split
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
@@ -32,8 +33,11 @@ NIH_LABELS = (
     "Pneumonia", "Pneumothorax", "Consolidation", "Edema", "Emphysema",
     "Fibrosis", "Pleural_Thickening", "Hernia",
 )
-ISIC_LABELS = ("MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC")
-ISIC_SOURCE_COLUMNS = {"MEL": "MEL", "NV": "NV", "BCC": "BCC", "AKIEC": "AK", "BKL": "BKL", "DF": "DF", "VASC": "VASC"}
+ISIC_LABELS = ("MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC", "SCC")
+ISIC_SOURCE_COLUMNS = {
+    "MEL": "MEL", "NV": "NV", "BCC": "BCC", "AKIEC": "AK",
+    "BKL": "BKL", "DF": "DF", "VASC": "VASC", "SCC": "SCC",
+}
 MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
 
@@ -90,7 +94,7 @@ class NIHChestXrayDataset(Dataset):
 
 
 class ISIC2019Dataset(Dataset):
-    """ISIC ground-truth one-hot rows represented as the API's seven output labels."""
+    """ISIC 2019 populated diagnosis labels, grouped by lesion where available."""
     def __init__(self, root, transform=None):
         self.root, self.transform = Path(root), transform
         labels_csv = self.root / "ISIC_2019_Training_GroundTruth.csv"
@@ -99,6 +103,12 @@ class ISIC2019Dataset(Dataset):
         files = {p.stem: p for p in self.root.glob("*/*.jpg")}
         if not files:
             files = {p.stem: p for p in self.root.rglob("*.jpg")}
+        lesion_by_image = {}
+        metadata_csv = self.root / "ISIC_2019_Training_Metadata.csv"
+        if metadata_csv.is_file():
+            with metadata_csv.open(newline="", encoding="utf-8-sig") as handle:
+                for row in csv.DictReader(handle):
+                    lesion_by_image[row["image"]] = (row.get("lesion_id") or "").strip()
         self.records = []
         self.skipped_unmapped = 0
         with labels_csv.open(newline="", encoding="utf-8-sig") as handle:
@@ -106,23 +116,27 @@ class ISIC2019Dataset(Dataset):
                 path = files.get(row["image"])
                 if path is not None:
                     target = [float(row[ISIC_SOURCE_COLUMNS[label]]) for label in ISIC_LABELS]
-                    # The serving model currently exposes seven labels and has
-                    # no SCC output. Do not silently train SCC images as an
-                    # all-negative (“healthy”) example for those seven labels.
+                    # The challenge's UNK column has no positive rows in the
+                    # supplied training ground truth. Keep the eight populated
+                    # diagnoses; do not invent an OOD/UNK training class.
                     if not any(target):
                         self.skipped_unmapped += 1
                         continue
-                    self.records.append((path, target))
+                    lesion_id = lesion_by_image.get(row["image"], "")
+                    group = f"lesion:{lesion_id}" if lesion_id else f"image:{row['image']}"
+                    self.records.append((path, target, group))
         if not self.records:
             raise RuntimeError(f"No ISIC images matched {labels_csv}")
         self.targets = np.asarray([r[1] for r in self.records], dtype=np.float32)
         self.strata = self.targets.argmax(axis=1)
+        self.groups = np.asarray([r[2] for r in self.records], dtype=str)
+        self.lesion_grouping_available = bool(lesion_by_image)
 
     def __len__(self):
         return len(self.records)
 
     def __getitem__(self, index):
-        path, target = self.records[index]
+        path, target, _group = self.records[index]
         with Image.open(path) as im:
             image = im.convert("RGB")
             if self.transform:
@@ -403,17 +417,33 @@ def binary_metrics(y_true, probabilities, class_names, threshold=0.5):
     )
     try:
         auc = float(roc_auc_score((y_true == positive_class).astype(int), probabilities[:, positive_class]))
+        average_precision = float(average_precision_score(
+            (y_true == positive_class).astype(int), probabilities[:, positive_class]))
     except ValueError:
         auc = float("nan")
+        average_precision = float("nan")
     tn, fp, fn, tp = confusion_matrix(y_true, predictions, labels=[negative_class, positive_class]).ravel()
     specificity = float(tn / max(tn + fp, 1))
     sensitivity = float(tp / max(tp + fn, 1))
+    positive_truth = (y_true == positive_class).astype(np.int64)
+    positive_scores = probabilities[:, positive_class]
+    bin_edges = np.linspace(0.0, 1.0, 11)
+    ece = 0.0
+    for lower, upper in zip(bin_edges[:-1], bin_edges[1:]):
+        in_bin = (positive_scores >= lower) & (positive_scores < upper if upper < 1.0 else positive_scores <= upper)
+        if np.any(in_bin):
+            ece += float(in_bin.mean()) * abs(float(positive_scores[in_bin].mean()) - float(positive_truth[in_bin].mean()))
     return {
         "accuracy": float(accuracy_score(y_true, predictions)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, predictions)),
         "precision_macro": float(precision_score(y_true, predictions, average="macro", zero_division=0)),
         "recall_macro": float(recall_score(y_true, predictions, average="macro", zero_division=0)),
         "f1_macro": float(f1_score(y_true, predictions, average="macro", zero_division=0)),
         "roc_auc_positive_class": auc,
+        "average_precision_positive_class": average_precision,
+        "matthews_correlation_coefficient": float(matthews_corrcoef(y_true, predictions)),
+        "brier_score_positive_class": float(np.mean((positive_scores - positive_truth) ** 2)),
+        "expected_calibration_error_10_bins": float(ece),
         "positive_class": class_names[positive_class],
         "decision_threshold": float(threshold),
         "sensitivity": sensitivity,
@@ -446,7 +476,7 @@ def set_binary_trainable_layers(model, modality, fine_tune=False):
 
 def run_binary_epoch(model, loader, criterion, device, *, optimizer=None, scaler=None,
                      scheduler=None, amp=False, deadline=None, decision_threshold=0.5,
-                     select_threshold=False):
+                     select_threshold=False, return_predictions=False):
     training = optimizer is not None
     model.train(training)
     if training:
@@ -491,8 +521,44 @@ def run_binary_epoch(model, loader, criterion, device, *, optimizer=None, scaler
         raise AttributeError("Binary DataLoader dataset must expose class_names")
     if select_threshold:
         decision_threshold = select_binary_threshold(y_true, probabilities, data_source.class_names)
-    return (total_loss / len(loader.dataset),
-            binary_metrics(y_true, probabilities, data_source.class_names, decision_threshold))
+    result = (total_loss / len(loader.dataset),
+              binary_metrics(y_true, probabilities, data_source.class_names, decision_threshold))
+    if return_predictions:
+        return (*result, y_true, probabilities)
+    return result
+
+
+def group_bootstrap_confidence_intervals(y_true, probabilities, groups, class_names,
+                                         threshold, *, repetitions=1000, seed=42):
+    """Percentile CIs from group resampling, preserving patient/lesion clusters."""
+    y_true = np.asarray(y_true, dtype=np.int64)
+    probabilities = np.asarray(probabilities, dtype=np.float64)
+    groups = np.asarray(groups, dtype=str)
+    unique_groups = np.unique(groups)
+    by_group = {group: np.flatnonzero(groups == group) for group in unique_groups}
+    positive = positive_class_index(class_names)
+    rng = np.random.default_rng(seed)
+    samples = {name: [] for name in ("roc_auc_positive_class", "average_precision_positive_class",
+                                      "sensitivity", "specificity", "positive_precision", "positive_f1")}
+    for _ in range(repetitions):
+        drawn = rng.choice(unique_groups, size=len(unique_groups), replace=True)
+        indices = np.concatenate([by_group[group] for group in drawn])
+        truth = y_true[indices]
+        binary_truth = (truth == positive).astype(np.int64)
+        if np.unique(binary_truth).size < 2:
+            continue
+        metrics = binary_metrics(truth, probabilities[indices], class_names, threshold)
+        for name in samples:
+            samples[name].append(metrics[name])
+    result = {}
+    for name, values in samples.items():
+        result[name] = ([float(x) for x in np.percentile(values, [2.5, 97.5])]
+                        if values else [float("nan"), float("nan")])
+    result["method"] = "percentile bootstrap over patient groups (NIH) or lesion groups (ISIC)"
+    result["repetitions"] = repetitions
+    result["group_count"] = int(len(unique_groups))
+    result["seed"] = int(seed)
+    return result
 
 
 def _binary_dataset_and_split(args, modality):
@@ -851,10 +917,34 @@ def evaluate_binary_checkpoint(args, modality):
                         persistent_workers=args.workers > 0,
                         worker_init_fn=_limit_worker_threads if args.workers > 0 else None)
     saved_threshold = float(checkpoint.get("decision_threshold", 0.5))
-    _, metrics = run_binary_epoch(model, loader, nn.CrossEntropyLoss(), device,
-                                  decision_threshold=saved_threshold)
+    _, metrics, y_true, probabilities = run_binary_epoch(
+        model, loader, nn.CrossEntropyLoss(), device,
+        decision_threshold=saved_threshold, return_predictions=True,
+    )
+    validation_records = [dataset.records[index] for index in val_idx]
+    validation_groups = [record[2] for record in validation_records]
+    confidence_intervals = group_bootstrap_confidence_intervals(
+        y_true, probabilities, validation_groups, class_names, saved_threshold,
+        repetitions=1000, seed=checkpoint.get("seed", args.seed),
+    )
+    prediction_path = Path(args.output_dir).parent / "logs" / f"{modality}_binary_{args.run_tag}_validation_predictions.csv"
+    prediction_path.parent.mkdir(parents=True, exist_ok=True)
+    positive_index = positive_class_index(class_names)
+    predicted_labels = np.where(probabilities[:, positive_index] >= saved_threshold,
+                                positive_index, 1 - positive_index)
+    with prediction_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(("sample_id", "actual_label", "predicted_label", "positive_class",
+                         "positive_probability", "decision_threshold"))
+        for record, truth, prediction, probability in zip(
+            validation_records, y_true, predicted_labels, probabilities[:, positive_index], strict=True
+        ):
+            writer.writerow((record[3], class_names[int(truth)], class_names[int(prediction)],
+                             class_names[positive_index], f"{probability:.9f}", f"{saved_threshold:.9f}"))
     result = {"checkpoint": str(checkpoint_path), "validation_count": len(val_idx),
               "class_names": list(class_names), "metrics": metrics,
+              "confidence_intervals_95": confidence_intervals,
+              "validation_predictions_csv": str(prediction_path),
               "validation_note": "Validation metrics are not independent test results and do not establish clinical readiness."}
     result_path = Path(args.output_dir).parent / "logs" / f"{modality}_binary_{args.run_tag}_evaluation.json"
     result_path.parent.mkdir(parents=True, exist_ok=True)
@@ -912,13 +1002,22 @@ def macro_roc_auc(targets, probabilities):
 
 
 def make_folds(dataset, modality, n_splits, seed):
-    """Stratify ISIC by class; split NIH at patient level with multilabel balancing."""
+    """Group-split both datasets; stratify skin classes and balance NIH labels."""
     if modality == "skin":
-        counts = np.bincount(dataset.strata)
-        if np.any(counts[counts > 0] < n_splits):
-            raise ValueError("Each represented ISIC class needs at least --folds examples")
-        return list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-                    .split(np.zeros(len(dataset)), dataset.strata))
+        if not hasattr(dataset, "groups"):
+            raise ValueError("ISIC folds require lesion groups; load ISIC2019Dataset with its metadata")
+        group_counts = [
+            len(np.unique(dataset.groups[dataset.strata == label]))
+            for label in np.unique(dataset.strata)
+        ]
+        if any(count < n_splits for count in group_counts):
+            raise ValueError("Each represented ISIC class needs at least --folds distinct lesion groups")
+        splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        folds = list(splitter.split(np.zeros(len(dataset)), dataset.strata, dataset.groups))
+        for train_idx, val_idx in folds:
+            if set(dataset.groups[train_idx]).intersection(dataset.groups[val_idx]):
+                raise RuntimeError("ISIC lesion leakage detected across a fold")
+        return folds
     try:
         from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
     except ImportError as exc:
@@ -1166,7 +1265,7 @@ def choose_budget_fraction(args, modalities, device):
         dataset = dataset_cls(root)
         sizes[modality] = len(dataset)
         if modality == "skin" and dataset.skipped_unmapped:
-            print(f"[skin] excluding {dataset.skipped_unmapped} unmapped images (including SCC)", flush=True)
+            print(f"[skin] excluding {dataset.skipped_unmapped} images with no populated ISIC training diagnosis", flush=True)
         train_ips, val_ips = measure_model_throughput(root, dataset_cls, modality, labels, args, device)
         fold_cost = args.epochs * len(dataset) * (
             (args.folds - 1) / train_ips + 1.0 / val_ips
@@ -1185,7 +1284,10 @@ def choose_budget_fraction(args, modalities, device):
         root = Path(args.data_dir) / ("nih_chest_xray" if modality == "xray" else "isic_2019")
         dataset = (NIHChestXrayDataset if modality == "xray" else ISIC2019Dataset)(root)
         if modality == "skin":
-            counts = np.bincount(dataset.strata, minlength=len(ISIC_LABELS))
+            counts = np.asarray([
+                len(np.unique(dataset.groups[dataset.strata == label]))
+                for label in range(len(ISIC_LABELS))
+            ], dtype=np.int64)
         else:
             patient_images = defaultdict(list)
             for idx, patient in enumerate(dataset.groups):
@@ -1231,7 +1333,7 @@ def train_modality(args, modality):
     base = dataset_cls(root)
     print(f"[{modality}] usable training images={len(base)}", flush=True)
     if modality == "skin" and base.skipped_unmapped:
-        print(f"[skin] skipped {base.skipped_unmapped} images whose diagnosis is outside the seven-label head (including SCC)", flush=True)
+        print(f"[skin] skipped {base.skipped_unmapped} images with no populated ISIC training diagnosis", flush=True)
     selected = select_dataset_indices(base, modality, args.sample_fraction, args.seed)
     sampled_view = DatasetIndexView(base, selected)
     folds = [
@@ -1352,7 +1454,7 @@ def tune_modality(args, modality):
     base = dataset_cls(root)
     print(f"[{modality}] tuning images={len(base)}", flush=True)
     if modality == "skin" and base.skipped_unmapped:
-        print(f"[skin] skipped {base.skipped_unmapped} images whose diagnosis is outside the seven-label head (including SCC)", flush=True)
+        print(f"[skin] skipped {base.skipped_unmapped} images with no populated ISIC training diagnosis", flush=True)
     folds = make_folds(base, modality, args.tuning_folds, args.seed)
     device = resolve_device(args.device, args.cpu)
     amp = device.type in {"cuda", "xpu"} and not args.no_amp
@@ -1488,7 +1590,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--modality", choices=("xray", "skin", "both"), default="both")
     parser.add_argument("--experiment-mode", choices=("full", "binary"), default="full",
-                        help="full preserves the 14/7-label models; binary runs isolated two-class experiments")
+                        help="full trains 14 NIH or 8 populated ISIC outputs; binary runs isolated two-class experiments")
     parser.add_argument("--data-dir", default="data")
     parser.add_argument("--output-dir", default="artifacts/weights")
     parser.add_argument("--folds", type=int, default=5)

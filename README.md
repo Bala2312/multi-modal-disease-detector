@@ -42,7 +42,17 @@ Download the two large Kaggle datasets with `python download_datasets.py`. The s
 
 ## Local binary experiments
 
-`train_engine.py` keeps the existing `--experiment-mode full` (the default) for the serving model outputs: 14 NIH findings and seven ISIC diagnoses. The separate `--experiment-mode binary` runs save to new tagged filenames and never overwrite the full-label checkpoints or the earlier untagged binary checkpoints. NIH keeps only exact `No Finding` and exact `Pneumonia` rows, uses patient IDs for a stratified group split, then samples without replacement. ISIC keeps unambiguous one-hot MEL/NV rows and preserves their source class ratio; repeated `lesion_id` values stay in one split. ISIC metadata has no patient identifier, so patient leakage cannot be ruled out.
+`train_engine.py` keeps `--experiment-mode full` (the default) for 14 NIH findings and the eight populated ISIC 2019 training diagnoses (`MEL`, `NV`, `BCC`, `AKIEC`, `BKL`, `DF`, `VASC`, `SCC`). The ISIC `UNK` column has zero positive training examples, so the code does not pretend it has learned an unknown/OOD class. ISIC full-label cross-validation uses lesion-aware stratified group folds. The separate `--experiment-mode binary` runs save to new tagged filenames and never overwrite the full-label checkpoints or the earlier untagged binary checkpoints. NIH keeps only exact `No Finding` and exact `Pneumonia` rows, uses patient IDs for a stratified group split, then samples without replacement. ISIC binary keeps unambiguous one-hot MEL/NV rows and preserves their source class ratio; repeated `lesion_id` values stay in one split. ISIC metadata has no patient identifier, so patient leakage cannot be ruled out.
+
+Dataset audit snapshot and limitations are documented in [reports/project_audit.md](reports/project_audit.md). The pitch calls the chest data "NIH CheXpert," but the local files are NIH ChestX-ray14. These are distinct datasets. The pitch's accuracy/IoU/factuality numbers are targets; see the audit for measured baseline metrics and incomplete phases.
+
+Regenerate the inventory, class counts, sampled image integrity checks, split leakage checks, distribution charts and representative image grids with:
+
+```powershell
+python data_audit.py --sample-size 250
+```
+
+The audit writes `reports/dataset_audit/dataset_audit.json`, `class_distribution.csv`, PNG/PDF class charts and representative image grids. Image decoding is checked on a deterministic sample; full-corpus pixel-duplicate and near-duplicate checks are not claimed.
 
 Binary mode selects **10,000 images total per dataset** by default. With the current files and seed 42, NIH selects all 322 exact-label Pneumonia images plus 9,678 No Finding images. ISIC selects about 2,599 MEL and 7,401 NV images from its 4,522 MEL and 12,875 NV eligible cases. It then makes a group-aware 80/20 split, prints exact total/per-class/split counts before training, and verifies both classes occur in both splits. Optional `--max-train-per-class` and `--max-val-per-class` caps default to 0 (uncapped); specifying caps that reduce the 10,000 total prints a limitation warning. Images load on demand rather than being held as tensors in RAM.
 
@@ -81,5 +91,21 @@ Evaluate a saved best checkpoint on its recorded validation images:
 python train_engine.py --experiment-mode binary --modality xray --evaluate --checkpoint artifacts/weights/xray_binary_10k_v2.pth --device auto
 python train_engine.py --experiment-mode binary --modality skin --evaluate --checkpoint artifacts/weights/skin_binary_10k_v2.pth --device auto
 ```
+
+Checkpoint evaluation saves per-image validation probabilities and computes group-bootstrap confidence intervals, PR-AUC, balanced accuracy, MCC and calibration diagnostics. Plot reproducible ROC, PR, operating-threshold and calibration curves from those saved predictions with:
+
+```powershell
+python plot_binary_evaluations.py
+```
+
+This produces validation-only figures and CSV/JSON metrics in `reports/experiments/binary_baselines`. It does not create an independent test set.
+
+Generate class-specific Grad-CAM for one representative validation true-positive, false-positive, false-negative and true-negative case per modality:
+
+```powershell
+python generate_gradcam_examples.py --modality both --device auto --limit-per-modality 4
+```
+
+The script saves the original image, colorized heatmap and overlay plus `gradcam_examples.json` under `reports/experiments/binary_baselines/gradcam_examples`. These are explanation diagnostics only; visual saliency does not prove disease localization or causal reasoning.
 
 To use a binary checkpoint in the existing API, explicitly point `XRAY_CHECKPOINT` or `SKIN_CHECKPOINT` to its tagged file and set the matching JSON label order (`["No Finding","Pneumonia"]` or `["MEL","NV"]`). Checkpoint metadata selects softmax and the validation-selected binary threshold; full-label checkpoints continue to use sigmoid. API configuration is per modality, so the other modality still needs its own compatible checkpoint. These validation results are not independent test results and do not establish clinical performance.

@@ -1,0 +1,195 @@
+{
+  "task": "binary_classification",
+  "experiment_mode": "binary",
+  "architecture": "densenet121",
+  "modality": "xray",
+  "labels": [
+    "No Finding",
+    "Pneumonia"
+  ],
+  "class_names": [
+    "No Finding",
+    "Pneumonia"
+  ],
+  "class_to_idx": {
+    "No Finding": 0,
+    "Pneumonia": 1
+  },
+  "preprocessing": {
+    "image_size": 16,
+    "color_mode": "RGB",
+    "resize": "square bilinear",
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "seed": 9,
+  "settings": {
+    "head_epochs": 1,
+    "fine_tune_epochs": 0,
+    "batch_size": 4,
+    "learning_rate": 0.01,
+    "weight_decay": 0.0,
+    "max_train_per_class": 0,
+    "max_val_per_class": 0,
+    "val_fraction": 0.2,
+    "image_size": 16,
+    "pretrained": false,
+    "workers": 0,
+    "patience": 2,
+    "amp": false,
+    "target_total_images": 30,
+    "run_tag": "smoke"
+  },
+  "metrics": {
+    "accuracy": 0.6666666666666666,
+    "balanced_accuracy": 0.5,
+    "precision_macro": 0.3333333333333333,
+    "recall_macro": 0.5,
+    "f1_macro": 0.4,
+    "roc_auc_positive_class": 0.5,
+    "average_precision_positive_class": 0.6666666666666666,
+    "matthews_correlation_coefficient": 0.0,
+    "brier_score_positive_class": 0.24023454910563538,
+    "expected_calibration_error_10_bins": 0.13421001036961877,
+    "positive_class": "Pneumonia",
+    "decision_threshold": 0.8008766770362854,
+    "sensitivity": 1.0,
+    "specificity": 0.0,
+    "positive_precision": 0.6666666666666666,
+    "positive_f1": 0.8,
+    "per_class": {
+      "No Finding": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2
+      },
+      "Pneumonia": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1-score": 0.8,
+        "support": 4
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        4
+      ]
+    ]
+  },
+  "decision_threshold": 0.8008766770362854,
+  "positive_label": "Pneumonia",
+  "epoch": 1,
+  "best_auc": 0.5,
+  "split_manifest": {
+    "train_ids": [
+      "p_15.png",
+      "nf_12.png",
+      "nf_17.png",
+      "p_8.png",
+      "p_19.png",
+      "p_1.png",
+      "p_18.png",
+      "p_17.png",
+      "nf_13.png",
+      "p_6.png",
+      "p_7.png",
+      "nf_14.png",
+      "p_12.png",
+      "p_9.png",
+      "nf_10.png",
+      "p_11.png",
+      "p_14.png",
+      "p_3.png",
+      "nf_4.png",
+      "p_10.png",
+      "p_16.png",
+      "nf_9.png",
+      "nf_11.png",
+      "p_4.png"
+    ],
+    "val_ids": [
+      "nf_18.png",
+      "p_2.png",
+      "nf_1.png",
+      "p_13.png",
+      "p_5.png",
+      "p_0.png"
+    ]
+  },
+  "filter_counts": {
+    "excluded_other_or_mixed": 0,
+    "missing_image": 0
+  },
+  "validation_note": "Validation metrics and threshold are not independent test results; no external test set was evaluated.",
+  "class_weights": [
+    1.5,
+    0.75
+  ],
+  "best_metrics": {
+    "accuracy": 0.6666666666666666,
+    "balanced_accuracy": 0.5,
+    "precision_macro": 0.3333333333333333,
+    "recall_macro": 0.5,
+    "f1_macro": 0.4,
+    "roc_auc_positive_class": 0.5,
+    "average_precision_positive_class": 0.6666666666666666,
+    "matthews_correlation_coefficient": 0.0,
+    "brier_score_positive_class": 0.24023454910563538,
+    "expected_calibration_error_10_bins": 0.13421001036961877,
+    "positive_class": "Pneumonia",
+    "decision_threshold": 0.8008766770362854,
+    "sensitivity": 1.0,
+    "specificity": 0.0,
+    "positive_precision": 0.6666666666666666,
+    "positive_f1": 0.8,
+    "per_class": {
+      "No Finding": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2
+      },
+      "Pneumonia": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1-score": 0.8,
+        "support": 4
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        4
+      ]
+    ]
+  },
+  "patience_counter": 0,
+  "selected_counts": {
+    "train": {
+      "No Finding": 8,
+      "Pneumonia": 16
+    },
+    "validation": {
+      "No Finding": 2,
+      "Pneumonia": 4
+    }
+  }
+}

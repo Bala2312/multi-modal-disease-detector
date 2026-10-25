@@ -33,21 +33,29 @@ DEFAULT_XRAY_LABELS = (
     "Pneumonia", "Pneumothorax", "Consolidation", "Edema", "Emphysema", "Fibrosis",
     "Pleural_Thickening", "Hernia",
 )
-DEFAULT_SKIN_LABELS = ("MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC")
+DEFAULT_SKIN_LABELS = ("MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC", "SCC")
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", "12000000"))
 MAX_IMAGE_PIXELS = int(os.getenv("MAX_IMAGE_PIXELS", "40000000"))
 _VISION_LOCK = threading.Lock()
 
 
 class AnalyzeResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
     diagnosis: str
     confidence: float
     triage_level: str
     triage_detail: dict
     heatmap_path: str
+    original_image_path: str
+    heatmap_image_path: str
     clinical_summary: str
     modality: str
     probabilities: dict[str, float]
+    model_version: str
+    uncertainty: float
+    evidence_sources: list[dict]
+    limitations: list[str]
 
 
 @dataclass(frozen=True)
@@ -70,6 +78,7 @@ class Settings:
 class Services:
     vision: object
     rag: object
+    model_versions: dict[str, str]
 
 
 def _load_settings() -> Settings:
@@ -146,12 +155,12 @@ def _get_services() -> Services:
                 "Set XRAY_LABELS/SKIN_LABELS to the checkpoint order or retrain/export consistently."
             )
         model = build_model(modality, len(labels))
-        return load_checkpoint(model, path), output_mode, decision_threshold, positive_label
+        return load_checkpoint(model, path), output_mode, decision_threshold, positive_label, path.name
 
-    xray_model, xray_output_mode, xray_threshold, xray_positive = load_configured_model(
+    xray_model, xray_output_mode, xray_threshold, xray_positive, xray_version = load_configured_model(
         Modality.CHEST_XRAY, settings.xray_checkpoint, settings.xray_labels
     )
-    skin_model, skin_output_mode, skin_threshold, skin_positive = load_configured_model(
+    skin_model, skin_output_mode, skin_threshold, skin_positive, skin_version = load_configured_model(
         Modality.SKIN_LESION, settings.skin_checkpoint, settings.skin_labels
     )
     vision = VisionEngine(
@@ -194,7 +203,24 @@ def _get_services() -> Services:
             raise FileNotFoundError("The configured Chroma collection is empty")
         rag.index_pdfs(settings.guidelines_dir, reset=True)
 
-    return Services(vision=vision, rag=rag)
+    return Services(vision=vision, rag=rag, model_versions={
+        Modality.CHEST_XRAY.value: xray_version,
+        Modality.SKIN_LESION.value: skin_version,
+    })
+
+
+def _probability_uncertainty(probabilities: dict[str, float]) -> float:
+    """Normalized mean Bernoulli entropy; a score diagnostic, not calibration."""
+    import math
+
+    if not probabilities:
+        return 1.0
+    eps = 1e-12
+    entropies = []
+    for raw in probabilities.values():
+        p = min(max(float(raw), eps), 1.0 - eps)
+        entropies.append(-(p * math.log(p) + (1.0 - p) * math.log(1.0 - p)) / math.log(2.0))
+    return float(sum(entropies) / len(entropies))
 
 
 def _analyze_sync(image: Image.Image, requested_modality: str | None) -> AnalyzeResponse:
@@ -221,6 +247,14 @@ def _analyze_sync(image: Image.Image, requested_modality: str | None) -> Analyze
                 cam_result = cam.generate(image, class_index)
 
         context = services.rag.search(prediction.top_label, top_k=settings.rag_top_k)
+        evidence_sources = []
+        for document in context:
+            metadata = getattr(document, "metadata", {}) or {}
+            evidence_sources.append({
+                "source": metadata.get("source", "unknown"),
+                "page": metadata.get("page"),
+                "title": metadata.get("title"),
+            })
         if context:
             try:
                 assistant = ClinicalAssistant(
@@ -252,9 +286,19 @@ def _analyze_sync(image: Image.Image, requested_modality: str | None) -> Analyze
             triage_level=triage.description,
             triage_detail=triage.to_dict(),
             heatmap_path=str(cam_result.output_path.resolve()),
+            original_image_path=str(cam_result.original_path.resolve()),
+            heatmap_image_path=str(cam_result.heatmap_path.resolve()),
             clinical_summary=summary,
             modality=prediction.modality.value,
             probabilities=prediction.probabilities,
+            model_version=services.model_versions[prediction.modality.value],
+            uncertainty=_probability_uncertainty(prediction.probabilities),
+            evidence_sources=evidence_sources,
+            limitations=[
+                "Research prototype: model scores are not diagnoses or calibrated clinical probabilities.",
+                "A low-risk output does not rule out serious disease; urgent symptoms require appropriate clinical assessment.",
+                "Triage thresholds are unvalidated and require clinician review.",
+            ],
         )
     except HTTPException:
         raise

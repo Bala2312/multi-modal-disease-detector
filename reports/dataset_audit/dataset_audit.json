@@ -1,0 +1,208 @@
+{
+  "audit_date": "2026-10-25",
+  "sample_size": 250,
+  "seed": 42,
+  "datasets": {
+    "nih_chest_xray": {
+      "source": {
+        "dataset": "NIH ChestX-ray14",
+        "download_id": "nih-chest-xrays/data",
+        "local_label_file": "C:\\Users\\11c16\\OneDrive\\Desktop\\Deep-learning-capstome\\data\\nih_chest_xray\\Data_Entry_2017.csv",
+        "official_source": "https://nihcc.app.box.com/v/ChestXray-NIHCC"
+      },
+      "inventory": {
+        "image_files": 112120,
+        "metadata_rows": 112120,
+        "unique_patients": 30805,
+        "repeated_patient_groups": 13302,
+        "missing_image_paths": 0,
+        "extension_counts": {
+          ".png": 112120
+        }
+      },
+      "labels": {
+        "per_finding_positive_rows_with_overlap": {
+          "Cardiomegaly": 2776,
+          "Emphysema": 2516,
+          "Effusion": 13317,
+          "No Finding": 60361,
+          "Hernia": 227,
+          "Infiltration": 19894,
+          "Mass": 5782,
+          "Nodule": 6331,
+          "Atelectasis": 11559,
+          "Pneumothorax": 5302,
+          "Pleural_Thickening": 3385,
+          "Pneumonia": 1431,
+          "Fibrosis": 1686,
+          "Edema": 2303,
+          "Consolidation": 4667
+        },
+        "top_exact_label_sets": [
+          [
+            "No Finding",
+            60361
+          ],
+          [
+            "Infiltration",
+            9547
+          ],
+          [
+            "Atelectasis",
+            4215
+          ],
+          [
+            "Effusion",
+            3955
+          ],
+          [
+            "Nodule",
+            2705
+          ],
+          [
+            "Pneumothorax",
+            2194
+          ],
+          [
+            "Mass",
+            2139
+          ],
+          [
+            "Effusion|Infiltration",
+            1603
+          ],
+          [
+            "Atelectasis|Infiltration",
+            1350
+          ],
+          [
+            "Consolidation",
+            1310
+          ],
+          [
+            "Atelectasis|Effusion",
+            1165
+          ],
+          [
+            "Pleural_Thickening",
+            1126
+          ],
+          [
+            "Cardiomegaly",
+            1093
+          ],
+          [
+            "Emphysema",
+            892
+          ],
+          [
+            "Infiltration|Nodule",
+            829
+          ]
+        ],
+        "multi_finding_rows": 20796,
+        "exact_no_finding": 60361,
+        "exact_pneumonia": 322
+      },
+      "quality_sample": {
+        "sample_count": 250,
+        "seed": 42,
+        "sample_extensions": {
+          ".png": 250
+        },
+        "sample_dimensions": {
+          "1024x1024": 250
+        },
+        "sample_pil_modes": {
+          "L": 249,
+          "RGBA": 1
+        },
+        "sample_decode_failures": [],
+        "full_decode_performed": false
+      },
+      "split_audit": {
+        "official_train_val_image_ids": 86524,
+        "official_test_image_ids": 25596,
+        "official_image_id_overlap": 0,
+        "baseline_train_image_ids_in_official_test": 1380,
+        "baseline_validation_image_ids_in_official_test": 321,
+        "baseline_selected_patient_ids_overlapping_official_test": 923,
+        "baseline_train_validation_image_id_overlap": 0
+      },
+      "duplicate_analysis": {
+        "method": "not performed for full corpus; repeat patient IDs tracked separately",
+        "exact_pixel_duplicates": null,
+        "near_duplicates": null
+      }
+    },
+    "isic_2019": {
+      "source": {
+        "dataset": "ISIC 2019 training split",
+        "download_id": "salviohexia/isic-2019-skin-lesion-images-for-classification",
+        "official_challenge": "https://challenge.isic-archive.com/landing/2019/",
+        "official_data_and_license": "https://challenge.isic-archive.com/data/",
+        "license_note": "Official aggregate training data is listed as CC BY-NC; verify contributor attribution and terms."
+      },
+      "inventory": {
+        "image_files": 25331,
+        "ground_truth_rows": 25331,
+        "metadata_rows": 25331,
+        "unique_ground_truth_image_ids": 25331,
+        "missing_image_paths": 0,
+        "ambiguous_rows": 0,
+        "extension_counts": {
+          ".jpg": 25331
+        },
+        "lesion_id_rows_nonempty": 23247,
+        "unique_lesion_ids": 11847,
+        "repeated_lesion_groups": 5059,
+        "patient_id_column_available": false
+      },
+      "labels": {
+        "NV": 12875,
+        "MEL": 4522,
+        "BKL": 2624,
+        "DF": 239,
+        "SCC": 628,
+        "BCC": 3323,
+        "VASC": 253,
+        "AK": 867
+      },
+      "quality_sample": {
+        "sample_count": 250,
+        "seed": 43,
+        "sample_extensions": {
+          ".jpg": 250
+        },
+        "sample_dimensions": {
+          "600x450": 87,
+          "1024x1024": 135,
+          "1024x768": 10,
+          "1024x680": 11,
+          "1024x682": 2,
+          "959x723": 1,
+          "1024x684": 2,
+          "959x638": 1,
+          "1024x685": 1
+        },
+        "sample_pil_modes": {
+          "RGB": 250
+        },
+        "sample_decode_failures": [],
+        "full_decode_performed": false
+      },
+      "split_audit": {
+        "baseline_train_image_ids": 8032,
+        "baseline_validation_image_ids": 1968,
+        "train_validation_image_id_overlap": 0,
+        "baseline_train_validation_lesion_id_overlap": 0
+      },
+      "duplicate_analysis": {
+        "method": "lesion IDs report repeated lesion images; pixel/near-duplicate scan not performed",
+        "repeated_lesion_groups_all_labels": 5059,
+        "exact_pixel_duplicates": null,
+        "near_duplicates": null
+      }
+    }
+  }
+}

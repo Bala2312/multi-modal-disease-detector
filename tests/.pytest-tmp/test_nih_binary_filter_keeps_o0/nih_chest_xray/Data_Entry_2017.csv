@@ -1,0 +1,22 @@
+Image Index,Finding Labels,Patient ID
+normal_0.png,No Finding,nf0
+normal_1.png,No Finding,nf1
+normal_2.png,No Finding,nf2
+normal_3.png,No Finding,nf3
+normal_4.png,No Finding,nf4
+normal_5.png,No Finding,nf5
+normal_6.png,No Finding,nf6
+normal_7.png,No Finding,nf7
+normal_8.png,No Finding,nf8
+normal_9.png,No Finding,nf9
+pneumonia_0.png,Pneumonia,p0
+pneumonia_1.png,Pneumonia,p1
+pneumonia_2.png,Pneumonia,p2
+pneumonia_3.png,Pneumonia,p3
+pneumonia_4.png,Pneumonia,p4
+pneumonia_5.png,Pneumonia,p5
+pneumonia_6.png,Pneumonia,p6
+pneumonia_7.png,Pneumonia,p7
+pneumonia_8.png,Pneumonia,p8
+pneumonia_9.png,Pneumonia,p9
+mixed.png,Pneumonia|Effusion,mixed
