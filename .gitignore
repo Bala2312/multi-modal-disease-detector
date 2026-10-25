@@ -8,3 +8,6 @@ outputs/heatmaps/*
 data/nih_chest_xray/
 data/isic_2019/
 data/.kaggle_downloads/
+
+tmp/
+artifacts/logs/
