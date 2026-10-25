@@ -11,3 +11,6 @@ data/.kaggle_downloads/
 
 tmp/
 artifacts/logs/
+
+tmp/
+artifacts/logs/
