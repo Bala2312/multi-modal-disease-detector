@@ -1,0 +1,100 @@
+{
+  "input": "C:\\Users\\11c16\\OneDrive\\Desktop\\Deep-learning-capstome\\medical_ai_capstone_submission.docx",
+  "fonts_by_char_count": {
+    "Times New Roman": 768
+  },
+  "direct_run_formatting_runs": 26,
+  "direct_paragraph_formatting_paragraphs": 30,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 62,
+      "text": "Modality",
+      "style": "Normal"
+    },
+    {
+      "para_index": 63,
+      "text": "Current output labels",
+      "style": "Normal"
+    },
+    {
+      "para_index": 64,
+      "text": "Target caveat",
+      "style": "Normal"
+    },
+    {
+      "para_index": 71,
+      "text": "Evaluation target",
+      "style": "Normal"
+    },
+    {
+      "para_index": 72,
+      "text": "Proposal goal",
+      "style": "Normal"
+    },
+    {
+      "para_index": 73,
+      "text": "Required measurement",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 3,
+        "run_text": "Abstract\u2014",
+        "style": "Abstract"
+      },
+      {
+        "para_index": 4,
+        "run_text": "Index Terms\u2014",
+        "style": "Keywords"
+      },
+      {
+        "para_index": 62,
+        "run_text": "Modality",
+        "style": "Normal"
+      },
+      {
+        "para_index": 63,
+        "run_text": "Current output labels",
+        "style": "Normal"
+      },
+      {
+        "para_index": 64,
+        "run_text": "Target caveat",
+        "style": "Normal"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 21,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 44,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 53,
+        "text": "[1] X. Wang et al., \u201cChestX-ray8: Hospital-scale chest X-ray database and benchmarks on weakly-supervised classification",
+        "style": "references"
+      },
+      {
+        "para_index": 54,
+        "text": "[2] G. Huang, Z. Liu, L. van der Maaten, and K. Q. Weinberger, \u201cDensely connected convolutional networks,\u201d in Proc. IEEE",
+        "style": "references"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

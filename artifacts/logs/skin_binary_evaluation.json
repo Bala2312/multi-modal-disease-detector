@@ -1,0 +1,40 @@
+{
+  "checkpoint": "artifacts\\weights\\skin_binary.pth",
+  "validation_count": 300,
+  "class_names": [
+    "MEL",
+    "NV"
+  ],
+  "metrics": {
+    "accuracy": 0.7,
+    "precision_macro": 0.715311004784689,
+    "recall_macro": 0.7,
+    "f1_macro": 0.6945701357466063,
+    "roc_auc_positive_class": 0.7993333333333333,
+    "positive_class": "MEL",
+    "per_class": {
+      "MEL": {
+        "precision": 0.6578947368421053,
+        "recall": 0.8333333333333334,
+        "f1-score": 0.7352941176470589,
+        "support": 150
+      },
+      "NV": {
+        "precision": 0.7727272727272727,
+        "recall": 0.5666666666666667,
+        "f1-score": 0.6538461538461539,
+        "support": 150
+      }
+    },
+    "confusion_matrix": [
+      [
+        125,
+        25
+      ],
+      [
+        65,
+        85
+      ]
+    ]
+  }
+}

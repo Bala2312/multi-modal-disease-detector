@@ -1,0 +1,14 @@
+# Template execution contract
+
+- Reference: `C:\Users\11c16\Downloads\conference-template-a4.docx`
+- Reference SHA-256: `57E2125B0A04860E103FD634C2B5FD19A7EA571FA59AC577BD97AFC73AD99482`
+- Reference package: strict OOXML relationships/namespaces; the python-docx reference used for inspection is a task-local converted copy at `tmp/docx_submission/reference_working.docx`. The uploaded source remains unchanged.
+- Template: IEEE conference A4 paper template. Template placeholder/tutorial text is to be removed in the submission.
+- Page geometry: A4 portrait, 595.30 x 841.90 pt (8.27 x 11.69 in). The paper-body section uses left/right margins about 45 pt, top 54 pt, bottom 72 pt, two columns with 18 pt gap. Template title section is full-width; its author sample has three columns. Keep the new title/abstract/keywords full-width, then use two columns for paper body.
+- Typography: inherited Times New Roman. `paper title` style 24 pt centered; `Author` 11 pt centered; `Abstract` 9 pt justified; `Heading 1` and `Heading 2` for IEEE section hierarchy; `Body Text` for paragraphs; `references` 8 pt. Reuse these styles; don't introduce a decorative design.
+- Lists/tables: template contains example/tutorial table material only; remove it. New comparison/specification tables should use light gray internal/outer borders, a dark blue header with white text, pale alternating body rows, readable compact type, and fit the column or span the page only when necessary.
+- Components: remove generic author placeholders and IEEE copyright placeholder; retain paper title, authorship slot, abstract, index terms, numbered headings, figure/table captions, and references. Do not retain any tutorial or sample content.
+- Content flow: title and team author line; abstract and index terms; two-column introduction, related work, system/method, training, explainability/RAG/triage, API workflow, evaluation plan, limitations, conclusion, references.
+- Author slot: use neutral `Capstone Project Team`; personal names, institution, and contact details were not supplied.
+- Evidence status: project pitch target metrics must be called targets, not completed results. No validation outcomes are supplied. Describe actual current code scope and unresolved ISIC label mapping as a limitation.
+- Fidelity gate: A4 portrait; full-width title block and abstract; two-column body; black Times New Roman hierarchy; IEEE-style numbered sections/captions/references. Renderer note: `render_docx.py` cannot render in this environment because bundled LibreOffice `soffice.exe` is not installed. Its first direct OOXML attempt also rejects the template's page dimensions expressed in points instead of twips. Page count and pixel comparison are unresolved; inspect DOCX structure and author in the source style, then attempt the renderer again on the final.

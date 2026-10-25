@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multi-Modal Medical Disease Detector &amp; AI Clinical Assistant</title>
+<style>
+:root{--navy:#101a2c;--ink:#172338;--muted:#53647b;--cyan:#08a6d3;--blue:#087ca8;--paper:#f8fafc;--line:#d6e1e9;--ice:#eaf6fa;--green:#148c79;--amber:#b97812}
+*{box-sizing:border-box}html{background:#dce5eb;scroll-behavior:smooth}body{margin:0;font-family:Inter,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+.slide{position:relative;isolation:isolate;width:min(100vw,1440px);aspect-ratio:16/9;margin:28px auto;padding:5.2% 6% 4.8%;overflow:hidden;background:var(--paper);box-shadow:0 18px 50px #12263e20;display:flex;flex-direction:column;gap:2%;page-break-after:always;break-after:page}
+.slide:before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:7px;background:var(--cyan)}.dark{color:#f4f8fb;background:var(--navy)}.dark:before{background:linear-gradient(90deg,var(--cyan),#65d4df 65%,transparent)}
+.mast,.footer{display:flex;justify-content:space-between;align-items:center;font-size:clamp(9px,.78vw,12px);letter-spacing:.07em;text-transform:uppercase;color:#8191a3}.mast{color:var(--muted)}.mark{color:var(--blue);font-weight:800}.dark .mast,.dark .footer{color:#94a8bc}.dark .mark{color:#67d5e8}
+h1,h2,h3,p{margin:0}h1{font-size:clamp(35px,4.2vw,64px);line-height:1.05;letter-spacing:-.04em;max-width:1050px}h2{font-size:clamp(25px,2.65vw,39px);line-height:1.08;color:var(--blue);border-left:5px solid var(--cyan);padding-left:15px;letter-spacing:-.025em}.dark h2{color:#f4f8fb}h3{font-size:clamp(15px,1.35vw,20px);line-height:1.2}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:2.2%}.lead{font:clamp(17px,1.65vw,24px)/1.43 Georgia,serif;color:#30435c;max-width:980px}.dark .lead{color:#d0dce8}.dek{font-size:clamp(14px,1.3vw,19px);color:var(--muted);line-height:1.4}.cols{display:grid;gap:2.2%;min-height:0}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.four{grid-template-columns:repeat(4,1fr)}.wide{grid-template-columns:1.2fr .8fr}
+.rule{height:1px;background:var(--line)}.dark .rule{background:#2b3a52}.stat{border-top:2px solid var(--cyan);padding-top:12px}.stat strong{display:block;color:var(--navy);font-size:clamp(23px,3vw,44px);line-height:1.08}.dark .stat strong{color:#fff}.stat span{display:block;color:var(--muted);font-size:clamp(11px,1vw,14px);line-height:1.4;margin-top:7px}.dark .stat span{color:#a9bbcd}
+.list{margin:0;padding-left:20px;color:#364960;font-size:clamp(12px,1.05vw,16px);line-height:1.44}.list li{margin:0 0 8px}.dark .list{color:#d0dce8}.callout{border-left:3px solid var(--cyan);padding:11px 15px;color:#2f4660;background:var(--ice);font:16px/1.42 Georgia,serif}.dark .callout{color:#d0dce8;background:#192b41}.small{color:var(--muted);font-size:clamp(10px,.9vw,13px);line-height:1.4}.dark .small{color:#a9bbcd}.tag{font-size:10px;color:var(--blue);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.table{overflow:hidden;border:1px solid var(--line);border-radius:8px;background:white}.table table{width:100%;border-collapse:collapse;font-size:clamp(10px,.88vw,13px);line-height:1.28}.table th{padding:10px 11px;text-align:left;background:var(--navy);color:white}.table td{padding:9px 11px;vertical-align:top;border-top:1px solid var(--line);color:#34465c}.table tr:nth-child(even) td{background:#f4f8fa}.table strong{color:var(--navy)}
+.frame{flex:1;min-height:0;display:flex;justify-content:center;align-items:center;padding:10px 15px;border:1px solid var(--line);border-radius:8px;background:white}.mermaid{display:flex;justify-content:center;width:100%;max-height:100%}.mermaid svg{max-width:100%;max-height:100%;height:auto}
+.math{padding:12px 15px;border-left:3px solid var(--cyan);color:#183c59;background:#edf7fa;font:clamp(13px,1.1vw,16px)/1.5 Georgia,serif}
+.chart{width:100%;height:auto;display:block}.chart text{font-family:Arial,sans-serif;fill:#43566d}.chart .axis{stroke:#8293a4}.chart .grid{stroke:#dbe4e9;stroke-dasharray:3 5}.chart .value{fill:white;font-weight:bold;font-size:13px}
+.foot{margin-top:auto}.title{justify-content:center;gap:4%}.eyebrow{color:#67d5e8;font-size:clamp(10px,.9vw,13px);font-weight:800;letter-spacing:.14em;text-transform:uppercase}.subtitle{color:#b6c5d5;font:clamp(18px,1.55vw,23px)/1.4 Georgia,serif}.end{color:#68d6e8;text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:800}
+.toolbar{position:fixed;z-index:10;right:18px;bottom:16px;display:flex;align-items:center;gap:8px;padding:8px;color:white;background:#101a2cf0;border:1px solid #344761;border-radius:999px;box-shadow:0 10px 30px #1234}.toolbar button{color:inherit;background:transparent;border:0;cursor:pointer;padding:8px 11px;border-radius:18px;font-weight:700}.toolbar button:hover{background:#2c405c}#counter{min-width:56px;text-align:center;color:#c2d1df;font-size:12px}
+@media(max-width:740px){.slide{aspect-ratio:auto;min-height:100vh;margin:0;padding:34px 24px 28px}.two,.three,.four,.wide{grid-template-columns:1fr}.table{overflow-x:auto}.table table{min-width:650px}}
+@page{size:13.333in 7.5in;margin:0}@media print{html,body{width:13.333in;background:white}.toolbar{display:none!important}.slide{width:13.333in;height:7.5in;min-height:0;aspect-ratio:auto;margin:0;padding:.4in .65in .36in;box-shadow:none;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.slide:last-of-type{break-after:auto;page-break-after:auto}h1{font-size:36pt}h2{font-size:24pt}h3{font-size:15pt}.list{font-size:11pt}.table table{font-size:9pt}.table td,.table th{padding:7px 8px}.small,.footer,.mast{font-size:8pt}.mermaid svg{max-height:4.5in}}
+</style>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+mermaid.initialize({startOnLoad:true,theme:"base",securityLevel:"strict",themeVariables:{primaryColor:"#eaf6fa",primaryTextColor:"#172338",primaryBorderColor:"#0787b1",lineColor:"#51677f",fontFamily:"Segoe UI, Arial"}});
+</script>
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},svg:{fontCache:'global'}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body><main id="deck">
+<section class="slide dark title" data-title="Title">
+ <div class="mast"><span class="mark">Deep Learning Capstone</span><span>Research proposal · 2026</span></div>
+ <div class="eyebrow">Explainable computer vision paired with grounded clinical guidance</div>
+ <h1>Multi-Modal Medical Disease Detector &amp; AI Clinical Assistant</h1>
+ <p class="subtitle">A research prototype for image classification, visual explanation, and evidence-grounded summaries</p><div class="rule"></div>
+ <div class="cols three"><div class="stat"><strong>2</strong><span>image modalities: chest X-ray and dermoscopy</span></div><div class="stat"><strong>2</strong><span>specialized vision backbones</span></div><div class="stat"><strong>1</strong><span>structured API pipeline with explicit safety limits</span></div></div>
+ <div class="footer"><span>Project presentation</span><span>Prototype; not a clinical device</span></div>
+</section>
+
+<section class="slide" data-title="Executive summary">
+ <div class="mast"><span class="mark">01 / Executive summary</span><span>PROJECT OVERVIEW</span></div><div class="body">
+ <h2>Executive summary</h2><p class="lead">The project combines modality-specific image classifiers with Grad-CAM explanations and guideline retrieval to produce a structured, reviewable decision-support output.</p>
+ <div class="cols two"><div><h3>Problem</h3><ul class="list"><li>Medical image interpretation requires specialist review and screening workloads can be large.</li><li>Image scores alone do not show where a model focused or how a finding relates to clinical guidance.</li><li>Unconstrained language models can state unsupported advice.</li></ul></div><div><h3>Proposed contributions</h3><ul class="list"><li>DenseNet-121 for chest X-ray labels and EfficientNet-B4 for skin lesions.</li><li>Grad-CAM overlays plus BioBERT/Chroma retrieval over supplied guideline PDFs.</li><li>Deterministic triage rules and a context-constrained summary behind FastAPI.</li></ul></div></div>
+ <div class="callout"><b>Key takeaway:</b> The prototype organizes model evidence for clinician review. It does not confirm a diagnosis or replace care.</div></div><div class="footer"><span>Capstone pitch, slides 2–4 and 7–10</span><span>02</span></div>
+</section>
+
+<section class="slide" data-title="Data and task">
+ <div class="mast"><span class="mark">02 / Data and task</span><span>IMAGE CLASSIFICATION</span></div><div class="body"><h2>Two modalities, two label spaces</h2><p class="dek">The training pipeline uses public benchmark datasets and a separate output vocabulary for each modality.</p>
+ <div class="cols two"><div class="stat"><strong>NIH ChestX-ray14</strong><span>Frontal radiographs · 14 independent disease labels · CSV finding labels · patient-level fold splitting reduces leakage.</span></div><div class="stat"><strong>ISIC 2019</strong><span>Dermoscopy · 7 API-aligned outputs: MEL, NV, BCC, AKIEC, BKL, DF, VASC. Source AK maps to AKIEC; UNK is excluded.</span></div></div>
+ <div class="cols three"><div><h3>Prediction</h3><p class="small">Independent sigmoid scores. Findings may co-occur; scores do not sum to one.</p></div><div><h3>Imbalance</h3><p class="small">Focal loss down-weights easy examples; class-wise AUC is reported only when both label outcomes occur.</p></div><div><h3>Split discipline</h3><p class="small">Patient-grouped NIH folds; stratified ISIC folds.</p></div></div><p class="small">The supplied pitch names NIH ChestX-ray14 and ISIC. The implementation uses those datasets, not the CheXpert wording appearing in one pitch slide.</p></div><div class="footer"><span>Output labels must match checkpoint order</span><span>03</span></div>
+</section>
+
+<section class="slide" data-title="Approach comparison">
+ <div class="mast"><span class="mark">03 / Literature context</span><span>COMPARATIVE MATRIX</span></div><div class="body"><h2>Approach comparison</h2><p class="dek">Qualitative comparison only: the supplied proposal has no controlled head-to-head evaluation on a shared test set.</p>
+ <div class="table"><table><thead><tr><th>Approach</th><th>Cost / compute</th><th>Precision &amp; FPR</th><th>Hardware</th><th>Project fit</th></tr></thead><tbody>
+ <tr><td><strong>Static image rules</strong></td><td>Low</td><td>Limited robustness; measure locally</td><td>CPU</td><td>Not expressive enough for image pathology</td></tr>
+ <tr><td><strong>Supervised single CNN</strong></td><td>Moderate training cost</td><td>Potentially strong; split and dataset dependent</td><td>GPU useful for training</td><td>Baseline without modality-specific routing</td></tr>
+ <tr><td><strong>Large vision model</strong></td><td>High compute and data needs</td><td>Potentially strong; validate locally</td><td>Accelerator preferred</td><td>Later benchmark against compact CNNs</td></tr>
+ <tr><td><strong>LiDAR / non-image sensors</strong></td><td>High acquisition cost</td><td>Not comparable on these image labels</td><td>Specialized hardware</td><td>Outside input scope</td></tr>
+ <tr><td><strong>Proposed dual-backbone pipeline</strong></td><td>Two model artifacts; GPU useful for training</td><td>To be measured per class and threshold</td><td>CPU possible; GPU accelerates batch work</td><td>Pairs score, heatmap, retrieved context, triage</td></tr>
+ </tbody></table></div><div class="callout"><b>Evaluation rule:</b> Report per-class ROC-AUC, sensitivity, specificity, precision, FPR, calibration, latency, and resource use on held-out data.</div></div><div class="footer"><span>No claim of measured superiority</span><span>04</span></div>
+</section>
+
+<section class="slide" data-title="Architecture">
+ <div class="mast"><span class="mark">04 / Architecture</span><span>FIGURE 1 · SYSTEM PIPELINE</span></div><div class="body"><h2>System architecture</h2><div class="frame"><pre class="mermaid">
+flowchart LR
+ A[Multipart image upload] --> B[Validate type size pixels]
+ B --> C{Modality}
+ C -->|Chest X-ray| D[Resize and normalize]
+ C -->|Skin lesion| E[Resize and normalize]
+ D --> F[DenseNet-121]
+ E --> G[EfficientNet-B4]
+ F --> H[Sigmoid label scores]
+ G --> H
+ H --> I[Top finding and probabilities]
+ I --> J[Grad-CAM overlay]
+ I --> K[Deterministic triage]
+ I --> L[BioBERT and Chroma retrieval]
+ L --> M[Retrieved guideline passages]
+ K --> N[Grounded LLM summary]
+ M --> N
+ J --> O[Structured response]
+ N --> O
+ </pre></div><div class="cols four"><div><span class="tag">01 · Ingest</span><p class="small">Validate and route image</p></div><div><span class="tag">02 · Infer</span><p class="small">Model-specific probabilities</p></div><div><span class="tag">03 · Explain</span><p class="small">Heatmap and guideline retrieval</p></div><div><span class="tag">04 · Respond</span><p class="small">Triage and summary</p></div></div></div><div class="footer"><span>POST /analyze · multipart image · optional modality override</span><span>05</span></div>
+</section>
+
+<section class="slide" data-title="Vision backbones">
+ <div class="mast"><span class="mark">05 / Vision pipeline</span><span>MODEL SELECTION</span></div><div class="body"><h2>Modality-specific vision models</h2>
+ <div class="cols two"><div><h3>DenseNet-121 · chest radiographs</h3><p class="small">Dense feature reuse supports gradient flow and a compact feature extractor. Replace its classifier with a 14-output head for NIH findings.</p><div class="math">Input $x\in\mathbb{R}^{3\times224\times224}$ → logits $z\in\mathbb{R}^{14}$ → $p_k=\sigma(z_k)$</div></div>
+ <div><h3>EfficientNet-B4 · skin lesions</h3><p class="small">Compound-scaled convolutional features provide a higher-capacity dermoscopy backbone. Replace the final classifier with a 7-output head aligned to ISIC classes.</p><div class="math">Input $x\in\mathbb{R}^{3\times224\times224}$ → logits $z\in\mathbb{R}^{7}$ → $p_k=\sigma(z_k)$</div></div></div>
+ <div class="cols three"><div class="stat"><strong>224 × 224</strong><span>Resize and ImageNet normalization in current inference</span></div><div class="stat"><strong>Independent</strong><span>Sigmoid outputs allow co-occurring findings</span></div><div class="stat"><strong>Transfer</strong><span>ImageNet initialization is optional during training</span></div></div>
+ <p class="small">Preprocessing is an engineering default and needs validation against each dataset's acquisition protocol.</p></div><div class="footer"><span>Model family follows the pitch; head size follows current data mapping</span><span>06</span></div>
+</section>
+
+<section class="slide" data-title="Training objective">
+ <div class="mast"><span class="mark">06 / Training design</span><span>IMBALANCE · OPTIMIZATION</span></div><div class="body"><h2>Training objective and optimization</h2><div class="cols wide">
+ <div><h3>Multi-label focal loss</h3><div class="math">$$p_t=y\sigma(z)+(1-y)(1-\sigma(z))$$ $$\mathcal{L}_{focal}=-\alpha_t(1-p_t)^\gamma\log(p_t)$$ $$\alpha_t=\alpha y+(1-\alpha)(1-y)$$</div><p class="small">The code computes stable BCE-with-logits, then multiplies by $(1-p_t)^\gamma$. Easy examples contribute less, while hard examples retain more weight. Alpha balances positive and negative polarity.</p></div>
+ <div><h3>Training recipe</h3><ul class="list"><li>RandomResizedCrop, horizontal flip, affine; ColorJitter for skin.</li><li>AdamW with decoupled weight decay.</li><li>CosineAnnealingWarmRestarts stepped per minibatch.</li><li>CUDA autocast and GradScaler when available.</li><li>Early stopping on validation macro ROC-AUC.</li></ul></div></div>
+ <div class="callout"><b>Cosine schedule:</b> $\eta_t=\eta_{min}+\frac12(\eta_{max}-\eta_{min})(1+\cos(\pi T_{cur}/T_i))$. LR decays across a cycle and resets at $T_i$; $T_{mult}$ expands later cycles.</div>
+ <p class="small">NIH folds split by patient; ISIC folds are stratified by class. Focal loss does not replace class-wise validation or calibration.</p></div><div class="footer"><span>Training implementation: train_engine.py</span><span>07</span></div>
+</section>
+
+<section class="slide" data-title="Grad-CAM">
+ <div class="mast"><span class="mark">07 / Explainability</span><span>FIGURE 2 · GRAD-CAM</span></div><div class="body"><h2>Visual explanation with Grad-CAM</h2><p class="dek">Backpropagate a target class score to a late convolutional feature map and create a coarse spatial attribution overlay.</p>
+ <div class="cols two"><div class="frame"><pre class="mermaid">
+flowchart TB
+ A[Image and class] --> B[Forward pass]
+ B --> C[Target activations A]
+ C --> D[Class score backward]
+ D --> E[Gradient maps]
+ E --> F[Global average pool]
+ F --> G[Weighted activation sum]
+ G --> H[ReLU and upsample]
+ H --> I[Jet color plus alpha blend]
+ I --> J[Save overlay]
+ </pre></div><div><div class="math">$$\alpha_k^c=\frac{1}{Z}\sum_i\sum_j\frac{\partial y^c}{\partial A_{ij}^k}$$ $$L_{GradCAM}^c=ReLU\left(\sum_k\alpha_k^cA^k\right)$$</div>
+ <ul class="list"><li>DenseNet layer: <code>features.denseblock4</code>.</li><li>EfficientNet-B4 layer: <code>features.7</code>.</li><li>Saved under <code>outputs/heatmaps/</code>.</li><li>Heatmaps are not lesion boundaries or proof of model correctness.</li></ul></div></div></div><div class="footer"><span>Validate against expert localization annotations before claiming accuracy</span><span>08</span></div>
+</section>
+
+<section class="slide" data-title="RAG">
+ <div class="mast"><span class="mark">08 / Grounded retrieval</span><span>RAG PIPELINE</span></div><div class="body"><h2>Guideline retrieval and summary generation</h2>
+ <div class="cols wide"><div class="frame"><pre class="mermaid">
+flowchart LR
+ A[Local guideline PDFs] --> B[Chunks 500 / overlap 50]
+ B --> C[BioBERT embeddings]
+ C --> D[Persistent Chroma index]
+ E[Top predicted label] --> F[Similarity search top K]
+ D --> F
+ F --> G[Source-tagged passages]
+ G --> H[Guarded LLM prompt]
+ I[Prediction and triage] --> H
+ H --> J[Evidence-based summary]
+ </pre></div><div><h3>Component roles</h3><ul class="list"><li><b>PyPDFDirectoryLoader</b> loads local PDF pages.</li><li><b>RecursiveCharacterTextSplitter</b> builds overlapping chunks.</li><li><b>BioBERT</b> embeds chunks and label queries.</li><li><b>ChromaDB</b> persists and retrieves vectors.</li><li><b>OpenAI chat model</b> synthesizes supplied passages only.</li></ul></div></div>
+ <div class="callout"><b>Grounding contract:</b> Treat retrieved text as untrusted. State when context is insufficient; do not invent diagnoses or individualized treatments.</div></div><div class="footer"><span>Requires relevant, licensed PDFs in data/guidelines/ and an indexed collection</span><span>09</span></div>
+</section>
+
+<section class="slide" data-title="Triage">
+ <div class="mast"><span class="mark">09 / Triage and safety</span><span>DETERMINISTIC ROUTING</span></div><div class="body"><h2>Triage is a separate deterministic layer</h2>
+ <div class="table"><table><thead><tr><th>Level</th><th>Example current rule triggers</th><th>Prototype behavior</th><th>Boundary</th></tr></thead><tbody>
+ <tr><td><strong>1 · Emergency</strong></td><td>Pneumothorax ≥ 0.50; melanoma / MEL ≥ 0.50</td><td>Highest urgency rule wins</td><td>Unvalidated threshold</td></tr>
+ <tr><td><strong>2 · Standard consult</strong></td><td>Pneumonia ≥ 0.35; other findings ≥ 0.40</td><td>Direct to qualified clinician review</td><td>Not a medical standard</td></tr>
+ <tr><td><strong>3 · Low risk</strong></td><td>No abnormal trigger; explicit normal label may set confidence</td><td>Conservative prototype routing</td><td>NIH head currently omits No Finding</td></tr>
+ </tbody></table></div>
+ <div class="cols two"><div><h3>Controls</h3><ul class="list"><li>Predictions marked unconfirmed.</li><li>LLM restricted to retrieved passages.</li><li>Empty retrieval returns deterministic insufficient-context wording.</li></ul></div><div><h3>Validation needed</h3><ul class="list"><li>Clinician review of thresholds and workflows.</li><li>Subgroup performance and calibration drift.</li><li>Human-review and escalation procedures.</li></ul></div></div></div><div class="footer"><span>Not for autonomous diagnosis or emergency use</span><span>10</span></div>
+</section>
+
+<section class="slide" data-title="Request flow">
+ <div class="mast"><span class="mark">10 / Request walkthrough</span><span>FIGURE 3 · API SEQUENCE</span></div><div class="body"><h2>End-to-end request walkthrough</h2><div class="frame"><pre class="mermaid">
+sequenceDiagram
+ actor User
+ participant API as FastAPI /analyze
+ participant V as VisionEngine
+ participant C as GradCAM
+ participant R as MedicalRAG
+ participant T as Triage rules
+ participant L as ClinicalAssistant
+ User->>API: Upload image + optional modality
+ API->>API: Validate bytes, dimensions, decode
+ API->>V: Route and infer
+ V-->>API: Label probabilities
+ par Explain and retrieve
+ API->>C: Explain top output
+ C-->>API: Heatmap file path
+ API->>R: Search top-label context
+ R-->>API: Top-K passages
+ API->>T: Evaluate score map
+ T-->>API: Triage result
+ end
+ opt Context passages retrieved
+ API->>L: Prediction + triage + context
+ L-->>API: Grounded summary
+ end
+ API-->>User: Structured JSON response
+ </pre></div><div class="cols four"><div><span class="tag">1 · Upload</span><p class="small">Validate type, size, pixels.</p></div><div><span class="tag">2 · Infer</span><p class="small">Modality-specific scores.</p></div><div><span class="tag">3 · Explain</span><p class="small">Heatmap and retrieved passages.</p></div><div><span class="tag">4 · Return</span><p class="small">Diagnosis label, triage, path, summary.</p></div></div></div><div class="footer"><span>Explicit modality override is preferred when known</span><span>11</span></div>
+</section>
+
+<section class="slide" data-title="Metrics">
+ <div class="mast"><span class="mark">11 / Evaluation plan</span><span>PROPOSAL TARGETS · NOT RESULTS</span></div><div class="body"><h2>Evaluation targets in the capstone pitch</h2><div class="cols wide">
+ <div><svg class="chart" viewBox="0 0 820 340" role="img" aria-label="Proposal targets, not achieved experimental results">
+ <line class="axis" x1="245" y1="35" x2="245" y2="285"/><line class="axis" x1="245" y1="285" x2="790" y2="285"/>
+ <line class="grid" x1="354" y1="35" x2="354" y2="285"/><line class="grid" x1="463" y1="35" x2="463" y2="285"/><line class="grid" x1="572" y1="35" x2="572" y2="285"/><line class="grid" x1="681" y1="35" x2="681" y2="285"/>
+ <text x="245" y="314">0%</text><text x="453" y="314">40%</text><text x="671" y="314">80%</text><text x="764" y="314">100%</text>
+ <text x="8" y="77">NIH ROC-AUC</text><rect x="245" y="52" width="501" height="34" rx="5" fill="#087ca8"/><text class="value" x="700" y="74">92%</text>
+ <text x="8" y="137">ISIC sensitivity</text><rect x="245" y="112" width="479" height="34" rx="5" fill="#148c79"/><text class="value" x="679" y="134">88%</text>
+ <text x="8" y="197">Grad-CAM localization IoU</text><rect x="245" y="172" width="441" height="34" rx="5" fill="#5d63cb"/><text class="value" x="641" y="194">81%</text>
+ <text x="8" y="257">RAG factuality</text><rect x="245" y="232" width="523" height="34" rx="5" fill="#bd8b28"/><text class="value" x="723" y="254">96%</text>
+ <text x="410" y="22" fill="#8a5a12" font-size="12" font-weight="bold">GOALS SPECIFIED IN THE PROJECT PITCH</text></svg></div>
+ <div><h3>Validation protocol</h3><ul class="list"><li>Freeze patient/lesion-separated test sets.</li><li>Report per-class NIH AUC and operating-point sensitivity/specificity.</li><li>Report ISIC per-class sensitivity, macro metrics, and confusion matrix.</li><li>Evaluate heatmaps against expert masks; predefine thresholding.</li><li>Audit RAG claims with clinician review and source traceability.</li></ul></div></div><div class="callout"><b>Status:</b> Values are targets on pitch slide 9. No completed results are reported here.</div></div><div class="footer"><span>Reproducible evaluation needed before performance claims</span><span>12</span></div>
+</section>
+
+<section class="slide" data-title="Ablation plan">
+ <div class="mast"><span class="mark">12 / Ablation plan</span><span>MEASURE BEFORE COMPARING</span></div><div class="body"><h2>Ablation and benchmark plan</h2><p class="dek">The proposal contains no controlled ablation results. This sequence isolates the contribution of each component.</p>
+ <div class="frame"><pre class="mermaid">
+flowchart LR
+ A[Baseline backbone + resize] --> B[Add augmentation]
+ B --> C[Use focal loss]
+ C --> D[Patient-aware CV and early stopping]
+ D --> E[Evaluate Grad-CAM localization]
+ E --> F[Audit RAG grounding]
+ </pre></div>
+ <div class="table"><table><thead><tr><th>Experiment</th><th>Change</th><th>Primary readout</th><th>Status</th></tr></thead><tbody>
+ <tr><td>Baseline</td><td>Backbone + deterministic preprocessing</td><td>Per-class AUC, sensitivity, specificity</td><td>Pending</td></tr>
+ <tr><td>Augmentation</td><td>Crop, flip, affine; skin color jitter</td><td>Test metrics and generalization gap</td><td>Pending</td></tr>
+ <tr><td>Imbalance</td><td>Focal vs BCEWithLogits</td><td>Rare-class recall and macro AUC</td><td>Pending</td></tr>
+ <tr><td>Explainability</td><td>Grad-CAM vs expert regions</td><td>IoU and pointing-game score</td><td>Pending</td></tr>
+ <tr><td>Grounding</td><td>Retrieved context vs no context</td><td>Unsupported claims and source coverage</td><td>Pending</td></tr>
+ </tbody></table></div><p class="small">Do not plot a performance-improvement curve until these runs exist. Keep splits, seeds, and thresholds controlled.</p></div><div class="footer"><span>Experiment plan, not measured findings</span><span>13</span></div>
+</section>
+
+<section class="slide" data-title="Tool choices">
+ <div class="mast"><span class="mark">13 / Implementation choices</span><span>WHY THESE COMPONENTS</span></div><div class="body"><h2>Model and tool roles</h2><div class="table"><table><thead><tr><th>Component</th><th>Role and reason</th><th>Limit / alternative to test</th></tr></thead><tbody>
+ <tr><td><strong>PyTorch / torchvision</strong></td><td>Transfer learning; hooks, AMP, and replaceable classifier heads</td><td>Pin versions; consider optimized export after baseline</td></tr>
+ <tr><td><strong>DenseNet-121</strong></td><td>Chest X-ray baseline with dense feature reuse</td><td>Compare ResNet and medical-image-pretrained models</td></tr>
+ <tr><td><strong>EfficientNet-B4</strong></td><td>Higher-capacity feature extractor for dermoscopy</td><td>Compare smaller B0/B2 models and runtime</td></tr>
+ <tr><td><strong>Focal + AdamW + cosine restarts</strong></td><td>Hard-example weighting, decoupled decay, cyclic LR</td><td>Tune alpha/gamma; compare class-weighted BCE</td></tr>
+ <tr><td><strong>Grad-CAM + OpenCV</strong></td><td>Class attribution from feature gradients and image blending</td><td>Not causal explanation or segmentation</td></tr>
+ <tr><td><strong>BioBERT + Chroma + LangChain</strong></td><td>Local guideline embeddings, persistent retrieval, prompt orchestration</td><td>BioBERT is not sentence-tuned; benchmark retrieval models</td></tr>
+ <tr><td><strong>FastAPI</strong></td><td>Typed multipart inference endpoint and response schema</td><td>Add auth, monitoring, privacy and retention controls before deployment</td></tr>
+ </tbody></table></div></div><div class="footer"><span>Current implementation choices; alternatives need controlled comparison</span><span>14</span></div>
+</section>
+
+<section class="slide" data-title="Roadmap">
+ <div class="mast"><span class="mark">14 / Integration and next steps</span><span>DEPLOYMENT BOUNDARIES</span></div><div class="body"><h2>Deployment path and future work</h2><div class="cols two"><div><h3>Current integration</h3><ul class="list"><li><code>POST /analyze</code> accepts an image and optional modality.</li><li>Returns top label, confidence, probability map, triage, heatmap path, summary, and modality.</li><li>Checkpoints and local Chroma index load lazily.</li><li>Use explicit modality when the image type is known.</li></ul></div><div><h3>Before a real-world pilot</h3><ul class="list"><li>External multi-site test cohort and subgroup analysis.</li><li>Clinician review of thresholds, heatmaps, and summary claims.</li><li>Secure image handling, access controls, audit, retention policy.</li><li>Prospective workflow study, monitoring, rollback, and model governance.</li></ul></div></div><div class="cols three"><div class="stat"><strong>01</strong><span>Calibrate image scores and triage thresholds with review</span></div><div class="stat"><strong>02</strong><span>Benchmark latency, CPU/GPU use, and memory by hardware</span></div><div class="stat"><strong>03</strong><span>Test external validity, drift, and human oversight</span></div></div><div class="callout"><b>Conclusion:</b> The architecture joins image classification, attribution, guideline retrieval, and deterministic triage. The next research milestone is validation, not autonomous clinical deployment.</div></div><div class="footer"><span>Reference paper guides academic structure only; its road-domain findings are not reused</span><span>15</span></div>
+</section>
+
+<section class="slide dark" data-title="Discussion and sources">
+ <div class="mast"><span class="mark">15 / Discussion</span><span>QUESTIONS</span></div><div class="body"><h2>Questions &amp; discussion</h2><p class="lead">The proposal sets measurable goals. The next milestone is reproducible evaluation with clinical review, careful data splits, and traceable evidence.</p><div class="rule"></div><h3>Sources and evidence notes</h3>
+ <ol class="list"><li>Deep Learning Capstone Project Pitch, “Multi-Modal Medical Disease Detector &amp; AI Clinical Assistant,” slides 2–10. Evaluation figures shown here are proposal targets.</li><li>“Road Quality Monitoring Smartphone Based Algorithm,” supplied manuscript used as a benchmark for section order, comparison, equations, evaluation planning, and limitations. Road-domain metrics are not transferred.</li><li>Project code: <code>vision_engine.py</code>, <code>train_engine.py</code>, <code>gradcam_engine.py</code>, <code>rag_engine.py</code>, <code>triage_llm.py</code>, <code>main.py</code>.</li></ol>
+ <p class="small">For research discussion only. Model scores and triage rules are not validated clinical advice.</p><div class="end">Thank you</div></div><div class="footer"><span>Multi-Modal Medical Disease Detector &amp; AI Clinical Assistant</span><span>16</span></div>
+</section>
+</main>
+<nav class="toolbar" aria-label="Slide navigation"><button id="prev" aria-label="Previous slide">←</button><span id="counter">1 / 16</span><button id="next" aria-label="Next slide">→</button><button id="print">Print / PDF</button></nav>
+<script>
+(() => {
+ const slides=Array.from(document.querySelectorAll(".slide")), counter=document.getElementById("counter"); let current=0;
+ function show(index){current=Math.max(0,Math.min(slides.length-1,index));slides[current].scrollIntoView({behavior:"smooth",block:"start"});counter.textContent=(current+1)+" / "+slides.length;}
+ document.getElementById("prev").addEventListener("click",()=>show(current-1));
+ document.getElementById("next").addEventListener("click",()=>show(current+1));
+ document.getElementById("print").addEventListener("click",()=>window.print());
+ document.addEventListener("keydown",e=>{if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();show(current+1)}if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();show(current-1)}if(e.key==="Home")show(0);if(e.key==="End")show(slides.length-1)});
+ const observer=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(visible){current=slides.indexOf(visible.target);counter.textContent=(current+1)+" / "+slides.length}},{threshold:[.5,.75]});slides.forEach(s=>observer.observe(s));
+})();
+</script>
+</body></html>

@@ -1,0 +1,70 @@
+{
+  "input": "C:\\Users\\11c16\\OneDrive\\Desktop\\Deep-learning-capstome\\tmp\\docx_submission\\reference_working.docx",
+  "fonts_by_char_count": {
+    "Times New Roman": 2,
+    "Symbol": 1
+  },
+  "direct_run_formatting_runs": 188,
+  "direct_paragraph_formatting_paragraphs": 22,
+  "heading_like_paragraphs_not_heading_style": [],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "Paper Title* (use style: paper title)",
+        "style": "paper title"
+      },
+      {
+        "para_index": 2,
+        "text": "*Note: Sub-titles are not captured in Xplore and should not be used",
+        "style": "Author"
+      },
+      {
+        "para_index": 3,
+        "text": "",
+        "style": "Author"
+      },
+      {
+        "para_index": 4,
+        "text": "",
+        "style": "Author"
+      },
+      {
+        "para_index": 5,
+        "text": "line 1: 1st Given Name Surname \nline 2: dept. name of organization \n(of Affiliation)\nline 3: name of organization \n(of A",
+        "style": "Author"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 2,
+        "run_text": "*",
+        "style": "Author"
+      },
+      {
+        "para_index": 2,
+        "run_text": "Note: Sub-titles are not captured in Xplore and should not be used",
+        "style": "Author"
+      },
+      {
+        "para_index": 5,
+        "run_text": "line 1",
+        "style": "Author"
+      },
+      {
+        "para_index": 5,
+        "run_text": ": 1",
+        "style": "Author"
+      },
+      {
+        "para_index": 5,
+        "run_text": "st",
+        "style": "Author"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

@@ -1,0 +1,37 @@
+# Core API and image handling
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+Pillow
+numpy
+
+# PyTorch vision models (install a build suited to your CPU/CUDA environment)
+torch
+torchvision
+
+# Grad-CAM visualization
+opencv-python-headless
+
+# Grounded retrieval over local PDF guidelines
+langchain
+langchain-community
+langchain-text-splitters
+langchain-huggingface
+langchain-chroma
+chromadb
+sentence-transformers
+transformers
+pypdf
+
+# LLM synthesis
+langchain-openai
+python-dotenv
+
+# Optional Kaggle data acquisition script
+kaggle
+
+# Training and validation metrics / multilabel-stratified patient folds
+scikit-learn>=1.1
+iterative-stratification
+optuna

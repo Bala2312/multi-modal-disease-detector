@@ -1,0 +1,10 @@
+.env
+__pycache__/
+.pytest_cache/
+*.py[cod]
+artifacts/weights/*
+artifacts/chroma_db/
+outputs/heatmaps/*
+data/nih_chest_xray/
+data/isic_2019/
+data/.kaggle_downloads/
